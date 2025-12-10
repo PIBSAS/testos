@@ -142,9 +142,10 @@ jobs:
 
       - name: Borrar carpeta textos fantasma
         run: |
-          if [ -d "textos" ]; then
-            git rm -rf textos
+          if [ -d "${{ env.PRIVATE_REPO_NAME }}" ]; then
+            rm -rf "${{ env.PRIVATE_REPO_NAME }}"
           fi
+
           
       - name: Commit and push
         run: |
