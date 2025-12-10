@@ -26,11 +26,11 @@ jobs:
           echo "${{ secrets.PRIVATE_REPO_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
+          echo -e "Host github.com\n\tStrictHostKeyChecking no\n\tIdentityFile ~/.ssh/id_rsa\n" >> ~/.ssh/config
 
       - name: Clonar repo privado con TEX
         run: |
-          git clone git@github.com:${{ github.repository_owner }}/${{ env.PRIVATE_REPO_NAME }}.git \
-            "${{ env.PRIVATE_TEX_FOLDER }}"
+          git clone git@github.com:${{ github.repository_owner }}/${{ env.PRIVATE_REPO_NAME }}.git "${{ env.PRIVATE_TEX_FOLDER }}"
 
       - name: Setup pandoc
         uses: nikeee/setup-pandoc@master
