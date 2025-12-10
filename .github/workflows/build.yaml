@@ -4,7 +4,11 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
-
+env:
+  PRIVATE_REPO_NAME: "textos" # EDITAR
+  PRIVATE_TEX_FOLDER: "tex" # NO EDITAR esto sería para reutilizar en otros proyectos
+  MATHJAX_URL: "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" # Cada cierto tiempo actualizar si se quiere tener la ultima version de mathjax
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,6 +19,18 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
+
+      - name: Configurar SSH para clonar repo privado
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRIVATE_REPO_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Clonar repo privado con TEX
+        run: |
+          git clone git@github.com:${{ github.repository_owner }}/${{ env.PRIVATE_REPO_NAME }}.git \
+            "${{ env.PRIVATE_TEX_FOLDER }}"
 
       - name: Setup pandoc
         uses: nikeee/setup-pandoc@master
@@ -45,14 +61,14 @@ jobs:
           cp -r css/* html/css/
           cp -r js/* html/js/
           
-          find tex -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" \) | while read IMG ; do
-              OUT="html/${IMG#tex/}"
+          find "${{ env.PRIVATE_TEX_FOLDER }}" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" \) | while read IMG ; do
+              OUT="html/${IMG#${{ env.PRIVATE_TEX_FOLDER }}/}"
               mkdir -p "$(dirname "$OUT")"
               cp "$IMG" "$OUT"
           done
             
-          find tex -name "*.tex" | while read FILE ; do
-            OUT="html/${FILE#tex/}"
+          find "${{ env.PRIVATE_TEX_FOLDER }}" -name "*.tex" | while read FILE ; do
+            OUT="html/${FILE#${{ env.PRIVATE_TEX_FOLDER }}/}"
             OUT="${OUT%.tex}.html"
             mkdir -p "$(dirname "$OUT")"
 
@@ -60,13 +76,7 @@ jobs:
             REL=""
             for ((i=0; i<DIR_DEPTH; i++)); do REL="../$REL"; done
 
-            pandoc "$FILE" -s -o "$OUT" --mathjax="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
-
-          # awk -v s="<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js\"></script>" '
-          #    /<\/head>/ { print s; }
-           #   { print; }
-           # ' "$OUT" > "$OUT.tmp"
-            #mv "$OUT.tmp" "$OUT"
+            pandoc "$FILE" -s -o "$OUT" --mathjax="${{ env.MATHJAX_URL }}"
 
             awk -v s="<script src=\"${REL}js/script.js\"></script>" '
               /<\/body>/ { print s; }
