@@ -136,6 +136,10 @@ jobs:
           done
           echo "]" >> list.json
 
+      - name: Borrar carpeta de repo privado
+        run: |
+          rm -rf "${{ env.PRIVATE_TEX_FOLDER }}"
+          
       - name: Commit and push
         run: |
           git config --global user.name "github-actions"
