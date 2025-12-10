@@ -139,6 +139,12 @@ jobs:
       - name: Borrar carpeta de repo privado
         run: |
           rm -rf "${{ env.PRIVATE_TEX_FOLDER }}"
+
+      - name: Borrar carpeta textos fantasma
+        run: |
+          if [ -d "textos" ]; then
+            git rm -rf textos
+          fi
           
       - name: Commit and push
         run: |
